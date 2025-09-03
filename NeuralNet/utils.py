@@ -1,0 +1,30 @@
+import numpy as np
+
+from ..tensor import Tensor
+from .types import _tuple_2_t
+
+def im2col(
+    input: Tensor,
+    kernel_size: _tuple_2_t[int],
+    out_shape: _tuple_2_t[int],
+    stride: _tuple_2_t[int] = (1, 1),
+    dilation: _tuple_2_t[int] = (1, 1)
+) -> Tensor:
+    batch_size, in_channels, h_in, w_in = input.shape
+    kernel_h, kernel_w = kernel_size
+    h_out, w_out = out_shape
+
+
+    i0 = np.repeat(np.arange(kernel_h), kernel_w)
+    i0 = np.tile(i0, in_channels) * dilation[0]
+    i1 = stride[0] * np.repeat(np.arange(h_out), w_out)
+
+    j0 = np.tile(np.arange(kernel_w), kernel_h * in_channels) * dilation[1]
+    j1 = stride[1] * np.tile(np.arange(w_out), h_out)
+
+    i = i0.reshape(-1, 1) 
+    j = j0.reshape(-1, 1) + j1.reshape(1, -1)
+    k = np.repeat(np.arange(in_channels), kernel_h * kernel_w).reshape(-1, 1)  
+
+    input_col = input[:, k, i, j]
+    return input_col
